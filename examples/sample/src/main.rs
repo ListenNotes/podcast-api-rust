@@ -1,4 +1,3 @@
-use listennotes::podcast_api;
 use serde_json::json;
 
 #[tokio::main]
