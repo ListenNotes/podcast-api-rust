@@ -3,7 +3,7 @@ use serde_json::json;
 
 #[tokio::main]
 async fn main() {
-    // Api Key  (None => Test API, Some(key) => Productino API)
+    // Api Key  (None => Test API, Some(key) => Production API)
     let api_key = None;
 
     // Create client
