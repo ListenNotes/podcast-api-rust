@@ -1,13 +1,13 @@
 use super::{Api, Result};
 use serde_json::{json, Value};
 
-pub struct Client {
+pub struct Client<'a> {
     client: reqwest::Client,
-    api: Api,
+    api: Api<'a>,
 }
 
-impl Client {
-    pub fn new(client: reqwest::Client, id: Option<String>) -> Client {
+impl Client<'_> {
+    pub fn new<'a>(client: reqwest::Client, id: Option<&'a str>) -> Client<'a> {
         Client {
             client,
             api: if let Some(id) = id {
