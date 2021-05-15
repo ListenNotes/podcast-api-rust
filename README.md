@@ -6,6 +6,9 @@ Rust library for the Listen Notes Podcast API
  - valid code: `cargo check`  
  - linting: `cargo clippy`  
 
+## Open Docs
+`cargo doc --open`
+
 ## Build
 `cargo build`  
 
