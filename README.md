@@ -2,7 +2,7 @@
 Rust library for the Listen Notes Podcast API
 
 ## Check
- - formatting: `cargo fmt --check`  
+ - formatting: `cargo fmt -- --check`  
  - valid code: `cargo check`  
  - linting: `cargo clippy`  
 
