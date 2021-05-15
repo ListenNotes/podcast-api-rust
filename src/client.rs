@@ -81,7 +81,7 @@ impl Client<'_> {
             .client
             .post(format!("{}/{}", self.api.url(), endpoint))
             .header("Content-Type", "application/x-www-form-urlencoded")
-            .body(serde_json::to_string(&parameters)?); // TODO: switch to URL encoding
+            .body(Self::urlencoded_from_json(parameters));
 
         Ok(self.request(request).await?)
     }
@@ -96,5 +96,41 @@ impl Client<'_> {
         .await?
         .json()
         .await?)
+    }
+
+    fn urlencoded_from_json(json: &Value) -> String {
+        if let Some(v) = json.as_object() {
+            v.iter()
+                .map(|(key, value)| {
+                    format!(
+                        "{}={}",
+                        key,
+                        match value {
+                            Value::String(s) => s.to_owned(), // serde_json String(_) formatter includes the quotations marks, this doesn't
+                            _ => format!("{}", value),
+                        }
+                    )
+                })
+                .collect::<Vec<String>>()
+                .join("&")
+        } else {
+            String::new()
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+    #[test]
+    fn urlencoded_from_json() {
+        assert_eq!(
+            super::Client::urlencoded_from_json(&json!({
+                "a": 1,
+                "b": true,
+                "c": "test_string"
+            })),
+            "a=1&b=true&c=test_string"
+        );
     }
 }
