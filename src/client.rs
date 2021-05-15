@@ -21,7 +21,7 @@ impl Client<'_> {
     /// ```
     /// let client = podcast_api::Client::new(reqwest::Client::new(), None);
     /// ```
-    pub fn new<'a>(client: reqwest::Client, id: Option<&'a str>) -> Client<'a> {
+    pub fn new(client: reqwest::Client, id: Option<&str>) -> Client {
         Client {
             client,
             api: if let Some(id) = id {
