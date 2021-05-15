@@ -1,5 +1,5 @@
 //! Official library for accessing the [Listen API](https://www.listennotes.com/api) by [Listen Notes](https://www.listennotes.com).
-//! 
+//!
 //! # Quick Start Example
 //!
 //! ```
