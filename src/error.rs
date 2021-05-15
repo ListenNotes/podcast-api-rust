@@ -1,6 +1,9 @@
+/// Error for API calls from [`Client`](super::Client).
 #[derive(Debug)]
 pub enum Error {
+    /// Error from http client.
     Reqwest(reqwest::Error),
+    /// Error from JSON creation/processing.
     Json(serde_json::Error),
 }
 
