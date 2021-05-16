@@ -1,13 +1,27 @@
 use super::{Api, Result};
-use serde_json::{json, Value};
+use reqwest::RequestBuilder;
+use serde_json::Value;
 
-pub struct Client {
+/// Client for accessing Listen Notes API.
+pub struct Client<'a> {
+    /// HTTP client.
     client: reqwest::Client,
-    api: Api,
+    /// API context.
+    api: Api<'a>,
 }
 
-impl Client {
-    pub fn new(client: reqwest::Client, id: Option<String>) -> Client {
+impl Client<'_> {
+    /// Creates new Listen API Client.
+    ///
+    /// To access production API:
+    /// ```
+    /// let client = podcast_api::Client::new(reqwest::Client::new(), Some("YOUR-API-KEY"));
+    /// ```
+    /// To access mock API:
+    /// ```
+    /// let client = podcast_api::Client::new(reqwest::Client::new(), None);
+    /// ```
+    pub fn new(client: reqwest::Client, id: Option<&str>) -> Client {
         Client {
             client,
             api: if let Some(id) = id {
@@ -18,59 +32,105 @@ impl Client {
         }
     }
 
+    /// Calls [`GET /search`](https://www.listennotes.com/api/docs/#get-api-v2-search) with supplied parameters.
     pub async fn search(&self, parameters: &Value) -> Result<Value> {
         self.get("search", parameters).await
     }
 
+    /// Calls [`GET /typeahead`](https://www.listennotes.com/api/docs/#get-api-v2-typeahead) with supplied parameters.
     pub async fn typeahead(&self, parameters: &Value) -> Result<Value> {
         self.get("typeahead", parameters).await
     }
 
-    pub async fn episode_by_id(&self, id: &str, parameters: &Value) -> Result<Value> {
+    /// Calls [`GET /best_podcasts`](https://www.listennotes.com/api/docs/#get-api-v2-best_podcasts) with supplied parameters.
+    pub async fn fetch_best_podcasts(&self, parameters: &Value) -> Result<Value> {
+        self.get("best_podcasts", parameters).await
+    }
+
+    /// Calls [`GET /podcasts/{id}`](https://www.listennotes.com/api/docs/#get-api-v2-podcasts-id) with supplied parameters.
+    pub async fn fetch_podcast_by_id(&self, id: &str, parameters: &Value) -> Result<Value> {
+        self.get(&format!("podcasts/{}", id), parameters).await
+    }
+
+    /// Calls [`POST /podcasts`](https://www.listennotes.com/api/docs/#post-api-v2-podcasts) with supplied parameters.
+    pub async fn batch_fetch_podcasts(&self, parameters: &Value) -> Result<Value> {
+        self.post("podcasts", parameters).await
+    }
+
+    /// Calls [`GET /episodes/{id}`](https://www.listennotes.com/api/docs/#get-api-v2-episodes-id) with supplied parameters.
+    pub async fn fetch_episode_by_id(&self, id: &str, parameters: &Value) -> Result<Value> {
         self.get(&format!("episodes/{}", id), parameters).await
     }
 
-    pub async fn episodes(&self, ids: &[&str], parameters: &Value) -> Result<Value> {
-        self.post("episodes", &parameters.with("ids", &ids.join(",").as_str()))
-            .await
-    }
-
-    pub async fn genres(&self, parameters: &Value) -> Result<Value> {
-        self.get("genres", parameters).await
+    /// Calls [`POST /episodes`](https://www.listennotes.com/api/docs/#post-api-v2-episodes) with supplied parameters.
+    pub async fn batch_fetch_episodes(&self, parameters: &Value) -> Result<Value> {
+        self.post("episodes", parameters).await
     }
 
     async fn get(&self, endpoint: &str, parameters: &Value) -> Result<Value> {
-        Ok(self
+        let request = self
             .client
             .get(format!("{}/{}", self.api.url(), endpoint))
-            .query(parameters)
-            .send()
-            .await?
-            .json()
-            .await?)
+            .query(parameters);
+
+        Ok(self.request(request).await?)
     }
 
     async fn post(&self, endpoint: &str, parameters: &Value) -> Result<Value> {
-        Ok(self
+        let request = self
             .client
             .post(format!("{}/{}", self.api.url(), endpoint))
             .header("Content-Type", "application/x-www-form-urlencoded")
-            .body(serde_json::to_string(&parameters)?) // TODO: switch to URL encoding
-            .send()
-            .await?
-            .json()
-            .await?)
+            .body(Self::urlencoded_from_json(parameters));
+
+        Ok(self.request(request).await?)
+    }
+
+    async fn request(&self, request: RequestBuilder) -> Result<Value> {
+        Ok(if let Api::Production(key) = self.api {
+            request.header("X-ListenAPI-Key", key)
+        } else {
+            request
+        }
+        .send()
+        .await?
+        .json()
+        .await?)
+    }
+
+    fn urlencoded_from_json(json: &Value) -> String {
+        if let Some(v) = json.as_object() {
+            v.iter()
+                .map(|(key, value)| {
+                    format!(
+                        "{}={}",
+                        key,
+                        match value {
+                            Value::String(s) => s.to_owned(), // serde_json String(_) formatter includes the quotations marks, this doesn't
+                            _ => format!("{}", value),
+                        }
+                    )
+                })
+                .collect::<Vec<String>>()
+                .join("&")
+        } else {
+            String::new()
+        }
     }
 }
 
-trait AddField {
-    fn with(&self, key: &str, value: &str) -> Self;
-}
-
-impl AddField for Value {
-    fn with(&self, key: &str, value: &str) -> Self {
-        let mut p = self.clone();
-        p[key] = json!(value);
-        p
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+    #[test]
+    fn urlencoded_from_json() {
+        assert_eq!(
+            super::Client::urlencoded_from_json(&json!({
+                "a": 1,
+                "b": true,
+                "c": "test_string"
+            })),
+            "a=1&b=true&c=test_string"
+        );
     }
 }
