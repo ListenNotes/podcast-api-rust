@@ -3,12 +3,16 @@ use reqwest::RequestBuilder;
 use serde_json::Value;
 use std::time::Duration;
 
+static DEFAULT_USER_AGENT: &str = "api-podcast-rust";
+
 /// Client for accessing Listen Notes API.
 pub struct Client<'a> {
     /// HTTP client.
     client: reqwest::Client,
     /// API context.
     api: Api<'a>,
+    /// User Agent Header for API calls.
+    user_agent: &'a str,
 }
 
 impl Client<'_> {
@@ -35,17 +39,27 @@ impl Client<'_> {
             } else {
                 Api::Mock
             },
+            user_agent: DEFAULT_USER_AGENT,
         }
     }
 
     /// Creates new Listen API Client with user provided HTTP Client.
-    pub fn new_custom(client: reqwest::Client, id: Option<&str>) -> Client {
+    pub fn new_custom<'a>(
+        client: reqwest::Client,
+        id: Option<&'a str>,
+        user_agent: Option<&'a str>,
+    ) -> Client<'a> {
         Client {
             client,
             api: if let Some(id) = id {
                 Api::Production(id)
             } else {
                 Api::Mock
+            },
+            user_agent: if let Some(user_agent) = user_agent {
+                user_agent
+            } else {
+                DEFAULT_USER_AGENT
             },
         }
     }
@@ -110,6 +124,7 @@ impl Client<'_> {
         } else {
             request
         }
+        .header("User-Agent", self.user_agent)
         .send()
         .await?
         .json()
