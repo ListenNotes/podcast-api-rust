@@ -34,8 +34,8 @@ mod mock {
     }
 
     #[test]
-    fn best_podcasts() {
-        let response = b!(client().best_podcasts(&json!({
+    fn fetch_best_podcasts() {
+        let response = b!(client().fetch_best_podcasts(&json!({
             "genre_id": 23,
         })))
         .unwrap();
@@ -44,15 +44,15 @@ mod mock {
     }
 
     #[test]
-    fn podcast() {
-        let response = b!(client().podcast("dummy_id", &json!({}))).unwrap();
+    fn fetch_podcast_by_id() {
+        let response = b!(client().fetch_podcast_by_id("dummy_id", &json!({}))).unwrap();
         assert!(response.is_object());
         assert!(response["episodes"].as_array().unwrap().len() > 0);
     }
 
     #[test]
-    fn podcasts() {
-        let response = b!(client().podcasts(&json!({
+    fn batch_fetch_podcasts() {
+        let response = b!(client().batch_fetch_podcasts(&json!({
             "ids": "996,777,888,1000"
         })))
         .unwrap();
@@ -61,8 +61,8 @@ mod mock {
     }
 
     #[test]
-    fn episode() {
-        let response = b!(client().episode("dummy_id", &json!({}))).unwrap();
+    fn fetch_episode_by_id() {
+        let response = b!(client().fetch_episode_by_id("dummy_id", &json!({}))).unwrap();
         assert!(response.is_object());
         assert!(
             response["podcast"].as_object().unwrap()["rss"]
@@ -74,8 +74,8 @@ mod mock {
     }
 
     #[test]
-    fn episodes() {
-        let response = b!(client().episodes(&json!({
+    fn batch_fetch_episodes() {
+        let response = b!(client().batch_fetch_episodes(&json!({
             "ids": "996,777,888,1000"
         })))
         .unwrap();

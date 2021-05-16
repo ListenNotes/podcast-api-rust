@@ -43,27 +43,27 @@ impl Client<'_> {
     }
 
     /// Calls [`GET /best_podcasts`](https://www.listennotes.com/api/docs/#get-api-v2-best_podcasts) with supplied parameters.
-    pub async fn best_podcasts(&self, parameters: &Value) -> Result<Value> {
+    pub async fn fetch_best_podcasts(&self, parameters: &Value) -> Result<Value> {
         self.get("best_podcasts", parameters).await
     }
 
     /// Calls [`GET /podcasts/{id}`](https://www.listennotes.com/api/docs/#get-api-v2-podcasts-id) with supplied parameters.
-    pub async fn podcast(&self, id: &str, parameters: &Value) -> Result<Value> {
+    pub async fn fetch_podcast_by_id(&self, id: &str, parameters: &Value) -> Result<Value> {
         self.get(&format!("podcasts/{}", id), parameters).await
     }
 
     /// Calls [`POST /podcasts`](https://www.listennotes.com/api/docs/#post-api-v2-podcasts) with supplied parameters.
-    pub async fn podcasts(&self, parameters: &Value) -> Result<Value> {
+    pub async fn batch_fetch_podcasts(&self, parameters: &Value) -> Result<Value> {
         self.post("podcasts", parameters).await
     }
 
     /// Calls [`GET /episodes/{id}`](https://www.listennotes.com/api/docs/#get-api-v2-episodes-id) with supplied parameters.
-    pub async fn episode(&self, id: &str, parameters: &Value) -> Result<Value> {
+    pub async fn fetch_episode_by_id(&self, id: &str, parameters: &Value) -> Result<Value> {
         self.get(&format!("episodes/{}", id), parameters).await
     }
 
     /// Calls [`POST /episodes`](https://www.listennotes.com/api/docs/#post-api-v2-episodes) with supplied parameters.
-    pub async fn episodes(&self, parameters: &Value) -> Result<Value> {
+    pub async fn batch_fetch_episodes(&self, parameters: &Value) -> Result<Value> {
         self.post("episodes", parameters).await
     }
 
