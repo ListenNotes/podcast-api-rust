@@ -8,7 +8,7 @@ mod mock {
     use serde_json::json;
 
     fn client<'a>() -> podcast_api::Client<'a> {
-        podcast_api::Client::new(reqwest::Client::new(), None)
+        podcast_api::Client::new(None)
     }
 
     #[test]

@@ -1,6 +1,7 @@
 use super::{Api, Result};
 use reqwest::RequestBuilder;
 use serde_json::Value;
+use std::time::Duration;
 
 /// Client for accessing Listen Notes API.
 pub struct Client<'a> {
@@ -13,15 +14,32 @@ pub struct Client<'a> {
 impl Client<'_> {
     /// Creates new Listen API Client.
     ///
+    /// Uses default HTTP client with 30 second timeouts.
+    ///
     /// To access production API:
     /// ```
-    /// let client = podcast_api::Client::new(reqwest::Client::new(), Some("YOUR-API-KEY"));
+    /// let client = podcast_api::Client::new(Some("YOUR-API-KEY"));
     /// ```
     /// To access mock API:
     /// ```
-    /// let client = podcast_api::Client::new(reqwest::Client::new(), None);
+    /// let client = podcast_api::Client::new(None);
     /// ```
-    pub fn new(client: reqwest::Client, id: Option<&str>) -> Client {
+    pub fn new(id: Option<&str>) -> Client {
+        Client {
+            client: reqwest::ClientBuilder::new()
+                .timeout(Duration::from_secs(30))
+                .build()
+                .expect("Client::new()"),
+            api: if let Some(id) = id {
+                Api::Production(id)
+            } else {
+                Api::Mock
+            },
+        }
+    }
+
+    /// Creates new Listen API Client with user provided HTTP Client.
+    pub fn new_custom(client: reqwest::Client, id: Option<&str>) -> Client {
         Client {
             client,
             api: if let Some(id) = id {

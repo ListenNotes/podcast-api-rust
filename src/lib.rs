@@ -11,7 +11,7 @@
 //!     let api_key = None;
 //!
 //!     // Create client
-//!     let client = podcast_api::Client::new(reqwest::Client::new(), api_key);
+//!     let client = podcast_api::Client::new(api_key);
 //!
 //!     // Call API
 //!     match client
