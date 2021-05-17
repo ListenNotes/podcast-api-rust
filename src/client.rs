@@ -15,6 +15,22 @@ pub struct Client<'a> {
     user_agent: &'a str,
 }
 
+#[derive(Debug)]
+/// Response and request context for API call.
+pub struct Response {
+    /// HTTP response.
+    pub response: reqwest::Response,
+    /// HTTP request that resulted in this response.
+    pub request: reqwest::Request,
+}
+
+impl Response {
+    /// Get JSON data object from [`reqwest::Response`].
+    pub async fn json(self) -> Result<Value> {
+        Ok(self.response.json().await?)
+    }
+}
+
 impl Client<'_> {
     /// Creates new Listen API Client.
     ///
@@ -65,41 +81,41 @@ impl Client<'_> {
     }
 
     /// Calls [`GET /search`](https://www.listennotes.com/api/docs/#get-api-v2-search) with supplied parameters.
-    pub async fn search(&self, parameters: &Value) -> Result<Value> {
+    pub async fn search(&self, parameters: &Value) -> Result<Response> {
         self.get("search", parameters).await
     }
 
     /// Calls [`GET /typeahead`](https://www.listennotes.com/api/docs/#get-api-v2-typeahead) with supplied parameters.
-    pub async fn typeahead(&self, parameters: &Value) -> Result<Value> {
+    pub async fn typeahead(&self, parameters: &Value) -> Result<Response> {
         self.get("typeahead", parameters).await
     }
 
     /// Calls [`GET /best_podcasts`](https://www.listennotes.com/api/docs/#get-api-v2-best_podcasts) with supplied parameters.
-    pub async fn fetch_best_podcasts(&self, parameters: &Value) -> Result<Value> {
+    pub async fn fetch_best_podcasts(&self, parameters: &Value) -> Result<Response> {
         self.get("best_podcasts", parameters).await
     }
 
     /// Calls [`GET /podcasts/{id}`](https://www.listennotes.com/api/docs/#get-api-v2-podcasts-id) with supplied parameters.
-    pub async fn fetch_podcast_by_id(&self, id: &str, parameters: &Value) -> Result<Value> {
+    pub async fn fetch_podcast_by_id(&self, id: &str, parameters: &Value) -> Result<Response> {
         self.get(&format!("podcasts/{}", id), parameters).await
     }
 
     /// Calls [`POST /podcasts`](https://www.listennotes.com/api/docs/#post-api-v2-podcasts) with supplied parameters.
-    pub async fn batch_fetch_podcasts(&self, parameters: &Value) -> Result<Value> {
+    pub async fn batch_fetch_podcasts(&self, parameters: &Value) -> Result<Response> {
         self.post("podcasts", parameters).await
     }
 
     /// Calls [`GET /episodes/{id}`](https://www.listennotes.com/api/docs/#get-api-v2-episodes-id) with supplied parameters.
-    pub async fn fetch_episode_by_id(&self, id: &str, parameters: &Value) -> Result<Value> {
+    pub async fn fetch_episode_by_id(&self, id: &str, parameters: &Value) -> Result<Response> {
         self.get(&format!("episodes/{}", id), parameters).await
     }
 
     /// Calls [`POST /episodes`](https://www.listennotes.com/api/docs/#post-api-v2-episodes) with supplied parameters.
-    pub async fn batch_fetch_episodes(&self, parameters: &Value) -> Result<Value> {
+    pub async fn batch_fetch_episodes(&self, parameters: &Value) -> Result<Response> {
         self.post("episodes", parameters).await
     }
 
-    async fn get(&self, endpoint: &str, parameters: &Value) -> Result<Value> {
+    async fn get(&self, endpoint: &str, parameters: &Value) -> Result<Response> {
         let request = self
             .client
             .get(format!("{}/{}", self.api.url(), endpoint))
@@ -108,7 +124,7 @@ impl Client<'_> {
         Ok(self.request(request).await?)
     }
 
-    async fn post(&self, endpoint: &str, parameters: &Value) -> Result<Value> {
+    async fn post(&self, endpoint: &str, parameters: &Value) -> Result<Response> {
         let request = self
             .client
             .post(format!("{}/{}", self.api.url(), endpoint))
@@ -118,17 +134,19 @@ impl Client<'_> {
         Ok(self.request(request).await?)
     }
 
-    async fn request(&self, request: RequestBuilder) -> Result<Value> {
-        Ok(if let Api::Production(key) = self.api {
+    async fn request(&self, request: RequestBuilder) -> Result<Response> {
+        let request = if let Api::Production(key) = self.api {
             request.header("X-ListenAPI-Key", key)
         } else {
             request
         }
         .header("User-Agent", self.user_agent)
-        .send()
-        .await?
-        .json()
-        .await?)
+        .build()?;
+
+        Ok(Response {
+            response: self.client.execute(request.try_clone().expect("Error can remain unhandled because we're not using streams, which are the try_clone fail condition")).await?,
+            request,
+        })
     }
 
     fn urlencoded_from_json(json: &Value) -> String {
