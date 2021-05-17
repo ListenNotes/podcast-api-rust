@@ -42,6 +42,7 @@ mod error;
 use api::Api;
 
 pub use client::Client;
+pub use client::Response;
 pub use error::Error;
 /// Result for API calls from [`Client`]
 pub type Result<T> = std::result::Result<T, error::Error>;
