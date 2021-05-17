@@ -6,7 +6,7 @@ async fn main() {
     let api_key = None;
 
     // Create client
-    let client = podcast_api::Client::new(reqwest::Client::new(), api_key);
+    let client = podcast_api::Client::new(api_key);
 
     // Call API
     match client
@@ -18,8 +18,12 @@ async fn main() {
     {
         Ok(response) => {
             println!("Successfully called \"typeahead\" endpoint.");
-            println!("Response Body:");
-            println!("{:?}", response);
+            if let Ok(body) = response.json().await {
+                println!("Response Body:");
+                println!("{:?}", body);
+            } else {
+                println!("Response body JSON data parsing error.")
+            }
         }
         Err(err) => {
             println!("Error calling \"typeahead\" endpoint:");
