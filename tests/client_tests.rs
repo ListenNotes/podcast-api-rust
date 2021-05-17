@@ -122,7 +122,8 @@ mod mock {
             // Request
             assert_eq!(response.request.method(), http::Method::POST);
             assert_eq!(response.request.url().path(), "/api/v2/podcasts");
-            let mut p = form_urlencoded::parse(response.request.body().unwrap().as_bytes().unwrap());
+            let mut p =
+                form_urlencoded::parse(response.request.body().unwrap().as_bytes().unwrap());
             assert_eq!(p.count(), 1);
             assert_eq!(
                 p.next(),
@@ -150,11 +151,13 @@ mod mock {
             // Response
             let body = response.json().await.unwrap();
             assert!(body.is_object());
-            assert!(body["podcast"].as_object().unwrap()["rss"]
-            .as_str()
-            .unwrap()
-            .len()
-            > 0);
+            assert!(
+                body["podcast"].as_object().unwrap()["rss"]
+                    .as_str()
+                    .unwrap()
+                    .len()
+                    > 0
+            );
         });
     }
 
@@ -170,7 +173,8 @@ mod mock {
             // Request
             assert_eq!(response.request.method(), http::Method::POST);
             assert_eq!(response.request.url().path(), "/api/v2/episodes");
-            let mut p = form_urlencoded::parse(response.request.body().unwrap().as_bytes().unwrap());
+            let mut p =
+                form_urlencoded::parse(response.request.body().unwrap().as_bytes().unwrap());
             assert_eq!(p.count(), 1);
             assert_eq!(
                 p.next(),
