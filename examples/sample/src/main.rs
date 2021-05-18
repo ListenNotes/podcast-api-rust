@@ -1,3 +1,4 @@
+use podcast_api::Error;
 use serde_json::json;
 
 #[tokio::main]
@@ -17,7 +18,7 @@ async fn main() {
         .await
     {
         Ok(response) => {
-            println!("Successfully called \"typeahead\" endpoint.");
+            println!("Successfully called Listen Notes API.");
             if let Ok(body) = response.json().await {
                 println!("Response Body:");
                 println!("{}", body);
@@ -26,8 +27,16 @@ async fn main() {
             }
         }
         Err(err) => {
-            println!("Error calling \"typeahead\" endpoint:");
-            println!("{},", err);
+            match err {
+                Error::NotFoundError => { println!("Not Found: {}", err); }
+                Error::AuthenticationError => { println!("Authentication Issue: {}", err); }
+                Error::RateLimitError => { println!("Rate Limit: {}", err); }
+                Error::InvalidRequestError => { println!("Invalid Request: {}", err); }
+                Error::ListenApiError => { println!("API Error: {}", err); }
+                Error::ApiConnectionError => { println!("Connection Issue: {}", err); }
+                Error::Reqwest(err) => { println!("Reqwest HTTP Client Error: {}", err); }
+                Error::Json(err) => { println!("JSON Parsing Error: {}", err); }
+            }
         }
     };
 }
