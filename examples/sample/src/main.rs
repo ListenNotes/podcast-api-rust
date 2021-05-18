@@ -20,14 +20,14 @@ async fn main() {
             println!("Successfully called \"typeahead\" endpoint.");
             if let Ok(body) = response.json().await {
                 println!("Response Body:");
-                println!("{:?}", body);
+                println!("{}", body);
             } else {
                 println!("Response body JSON data parsing error.")
             }
         }
         Err(err) => {
             println!("Error calling \"typeahead\" endpoint:");
-            println!("{:?},", err);
+            println!("{},", err);
         }
     };
 }

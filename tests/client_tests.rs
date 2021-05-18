@@ -47,9 +47,11 @@ mod mock {
                     "q": "dummy",
                     "sort_by_date": 1
                 }))
-                .await
-                .unwrap();
-            assert_eq!(response.response.status(), http::StatusCode::UNAUTHORIZED);
+                .await;
+            assert!(match response {
+                Err(podcast_api::Error::AuthenticationError) => true,
+                _ => false,
+            });
         });
     }
 

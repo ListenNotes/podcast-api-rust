@@ -1,4 +1,5 @@
-use super::{Api, Result};
+use super::{Api, Error, Result};
+use http::StatusCode;
 use reqwest::RequestBuilder;
 use serde_json::Value;
 use std::time::Duration;
@@ -143,8 +144,26 @@ impl Client<'_> {
         .header("User-Agent", self.user_agent)
         .build()?;
 
+        let response = self.client.execute(request.try_clone().expect("Error can remain unhandled because we're not using streams, which are the try_clone fail condition")).await;
+
+        match &response {
+            Ok(response) => match response.status() {
+                StatusCode::NOT_FOUND => return Err(Error::NotFoundError),
+                StatusCode::UNAUTHORIZED => return Err(Error::AuthenticationError),
+                StatusCode::TOO_MANY_REQUESTS => return Err(Error::RateLimitError),
+                StatusCode::BAD_REQUEST => return Err(Error::InvalidRequestError),
+                StatusCode::INTERNAL_SERVER_ERROR => return Err(Error::ListenApiError),
+                _ => {}
+            },
+            Err(err) => {
+                if err.is_connect() || err.is_timeout() {
+                    return Err(Error::ApiConnectionError);
+                }
+            }
+        };
+
         Ok(Response {
-            response: self.client.execute(request.try_clone().expect("Error can remain unhandled because we're not using streams, which are the try_clone fail condition")).await?,
+            response: response?,
             request,
         })
     }
