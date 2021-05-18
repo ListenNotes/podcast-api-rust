@@ -61,11 +61,7 @@ impl Client<'_> {
     }
 
     /// Creates new Listen API Client with user provided HTTP Client.
-    pub fn new_custom<'a>(
-        client: reqwest::Client,
-        id: Option<&'a str>,
-        user_agent: Option<&'a str>,
-    ) -> Client<'a> {
+    pub fn new_custom<'a>(client: reqwest::Client, id: Option<&'a str>, user_agent: Option<&'a str>) -> Client<'a> {
         Client {
             client,
             api: if let Some(id) = id {
@@ -116,6 +112,36 @@ impl Client<'_> {
         self.post("episodes", parameters).await
     }
 
+    /// Calls [`GET /curated_podcasts/{id}`](https://www.listennotes.com/api/docs/#post-api-v2-curated_podcasts-id) with supplied parameters.
+    pub async fn fetch_curated_podcasts_list_by_id(&self, id: &str, parameters: &Value) -> Result<Response> {
+        self.get(&format!("curated_podcasts/{}", id), parameters).await
+    }
+
+    /// Calls [`GET /curated_podcasts`](https://www.listennotes.com/api/docs/#post-api-v2-curated_podcasts) with supplied parameters.
+    pub async fn fetch_curated_podcasts_lists(&self, parameters: &Value) -> Result<Response> {
+        self.get("curated_podcasts", parameters).await
+    }
+
+    /// Calls [`GET /genres`](https://www.listennotes.com/api/docs/#post-api-v2-genres) with supplied parameters.
+    pub async fn fetch_podcast_genres(&self, parameters: &Value) -> Result<Response> {
+        self.get("genres", parameters).await
+    }
+
+    /// Calls [`GET /regions`](https://www.listennotes.com/api/docs/#post-api-v2-regions) with supplied parameters.
+    pub async fn fetch_podcast_regions(&self, parameters: &Value) -> Result<Response> {
+        self.get("regions", parameters).await
+    }
+
+    /// Calls [`GET /languages`](https://www.listennotes.com/api/docs/#post-api-v2-languages) with supplied parameters.
+    pub async fn fetch_podcast_languages(&self, parameters: &Value) -> Result<Response> {
+        self.get("languages", parameters).await
+    }
+
+    /// Calls [`GET /just_listen`](https://www.listennotes.com/api/docs/#post-api-v2-just_listen) with supplied parameters.
+    pub async fn just_listen(&self, parameters: &Value) -> Result<Response> {
+        self.get("just_listen", parameters).await
+    }
+
     async fn get(&self, endpoint: &str, parameters: &Value) -> Result<Response> {
         let request = self
             .client
@@ -144,7 +170,12 @@ impl Client<'_> {
         .header("User-Agent", self.user_agent)
         .build()?;
 
-        let response = self.client.execute(request.try_clone().expect("Error can remain unhandled because we're not using streams, which are the try_clone fail condition")).await;
+        let response = self
+            .client
+            .execute(request.try_clone().expect(
+                "Error can remain unhandled because we're not using streams, which are the try_clone fail condition",
+            ))
+            .await;
 
         match &response {
             Ok(response) => match response.status() {
