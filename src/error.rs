@@ -44,13 +44,30 @@ impl std::error::Error for Error {
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Error::AuthenticationError =>   write!(f, "Wrong api key or your account is suspended."),
-            Error::ApiConnectionError =>    write!(f, "Fail to connect to API servers."),
-            Error::InvalidRequestError =>   write!(f, "Something wrong on your end (client side errors), e.g., missing required parameters."),
-            Error::RateLimitError =>        write!(f, "You are using FREE plan and you exceed the quota limit."),
-            Error::NotFoundError =>         write!(f, "Endpoint not exist, or podcast / episode not exist."),
-            Error::ListenApiError =>        write!(f, "Something wrong on our end (unexpected server errors)."),
-            Error::Reqwest(_) | Error::Json(_) => write!(f, "{}", self)
+            Error::AuthenticationError => {
+                write!(f, "Wrong api key or your account is suspended.")
+            }
+            Error::ApiConnectionError => {
+                write!(f, "Fail to connect to API servers.")
+            }
+            Error::InvalidRequestError => {
+                write!(
+                    f,
+                    "Something wrong on your end (client side errors), e.g., missing required parameters."
+                )
+            }
+            Error::RateLimitError => {
+                write!(f, "You are using FREE plan and you exceed the quota limit.")
+            }
+            Error::NotFoundError => {
+                write!(f, "Endpoint not exist, or podcast / episode not exist.")
+            }
+            Error::ListenApiError => {
+                write!(f, "Something wrong on our end (unexpected server errors).")
+            }
+            Error::Reqwest(_) | Error::Json(_) => {
+                write!(f, "{}", self)
+            }
         }
     }
 }
