@@ -3,6 +3,12 @@ name = "podcast-api"
 version = "0.1.0"
 authors = ["Cameron Fyfe <cameron.j.fyfe@gmail.com>"]
 edition = "2018"
+description = "Rust bindings for the Listen Notes Podcast API"
+license = "MIT"
+keywords = ["listennotes", "podcast"]
+documentation = "https://docs.rs/podcast-api"
+repository = "https://github.com/ListenNotes/podcast-api-rust"
+readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
