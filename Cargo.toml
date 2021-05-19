@@ -9,6 +9,8 @@ keywords = ["listennotes", "podcast", "searchengine", "podcastsearch"]
 documentation = "https://www.listennotes.com/api/docs/"
 repository = "https://github.com/ListenNotes/podcast-api-rust"
 readme = "README.md"
+homepage = "https://www.listennotes.com/api/"
+categories = ["api-bindings", "multimedia::audio", "multimedia"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
