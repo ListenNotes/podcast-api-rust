@@ -5,6 +5,7 @@ use serde_json::json;
 async fn main() {
     // Api Key  (None => Test API, Some(key) => Production API)
     let api_key = None;
+    // let api_key = Some("put your api key here");    
 
     // Create client
     let client = podcast_api::Client::new(api_key);

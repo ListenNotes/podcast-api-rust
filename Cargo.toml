@@ -1,12 +1,12 @@
 [package]
 name = "podcast-api"
-version = "0.1.0"
-authors = ["Cameron Fyfe <cameron.j.fyfe@gmail.com>"]
+version = "1.0.1"
+authors = ["Listen Notes, Inc. <hello@listennotes.com>"]
 edition = "2018"
 description = "Rust bindings for the Listen Notes Podcast API"
 license = "MIT"
-keywords = ["listennotes", "podcast"]
-documentation = "https://docs.rs/podcast-api"
+keywords = ["listennotes", "podcast", "searchengine", "podcastsearch"]
+documentation = "https://www.listennotes.com/api/docs/"
 repository = "https://github.com/ListenNotes/podcast-api-rust"
 readme = "README.md"
 
