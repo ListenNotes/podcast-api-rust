@@ -142,6 +142,36 @@ impl Client<'_> {
         self.get("just_listen", parameters).await
     }
 
+    /// Calls [`GET /podcasts/{id}/recommendations`](https://www.listennotes.com/api/docs/#get-api-v2-podcasts-id-recommendations) with supplied parameters.
+    pub async fn fetch_recommendations_for_podcast(&self, id: &str, parameters: &Value) -> Result<Response> {
+        self.get(&format!("podcasts/{}/recommendations", id), parameters).await
+    }
+
+    /// Calls [`GET /episodes/{id}/recommendations`](https://www.listennotes.com/api/docs/#get-api-v2-episodes-id-recommendations) with supplied parameters.
+    pub async fn fetch_recommendations_for_episode(&self, id: &str, parameters: &Value) -> Result<Response> {
+        self.get(&format!("episodes/{}/recommendations", id), parameters).await
+    }
+
+    /// Calls [`GET /playlists/{id}`](https://www.listennotes.com/api/docs/#get-api-v2-playlists-id) with supplied parameters.
+    pub async fn fetch_playlist_by_id(&self, id: &str, parameters: &Value) -> Result<Response> {
+        self.get(&format!("playlists/{}", id), parameters).await
+    }
+
+    /// Calls [`GET /playlists`](https://www.listennotes.com/api/docs/#get-api-v2-playlists) with supplied parameters.
+    pub async fn fetch_my_playlists(&self, parameters: &Value) -> Result<Response> {
+        self.get("playlists", parameters).await
+    }
+
+    /// Calls [`POST /podcasts/submit`](https://www.listennotes.com/api/docs/#post-api-v2-podcasts-submit) with supplied parameters.
+    pub async fn submit_podcast(&self, parameters: &Value) -> Result<Response> {
+        self.post("podcasts/submit", parameters).await
+    }
+
+    /// Calls [`DELETE /podcasts/{id}`](https://www.listennotes.com/api/docs/#delete-api-v2-podcasts-id) with supplied parameters.
+    pub async fn delete_podcast(&self, id: &str, parameters: &Value) -> Result<Response> {
+        self.delete(&format!("podcasts/{}", id), parameters).await
+    }
+
     async fn get(&self, endpoint: &str, parameters: &Value) -> Result<Response> {
         let request = self
             .client
@@ -157,6 +187,15 @@ impl Client<'_> {
             .post(format!("{}/{}", self.api.url(), endpoint))
             .header("Content-Type", "application/x-www-form-urlencoded")
             .body(Self::urlencoded_from_json(parameters));
+
+        Ok(self.request(request).await?)
+    }
+
+    async fn delete(&self, endpoint: &str, parameters: &Value) -> Result<Response> {
+        let request = self
+            .client
+            .delete(format!("{}/{}", self.api.url(), endpoint))
+            .query(parameters);
 
         Ok(self.request(request).await?)
     }
