@@ -290,4 +290,127 @@ mod mock {
             assert!(body["audio_length_sec"].as_i64().unwrap() > 0);
         });
     }
+
+    #[test]
+    fn fetch_recommendations_for_podcast() {
+        b!(async {
+            let response = client()
+                .fetch_recommendations_for_podcast("adfsddf", &json!({}))
+                .await
+                .unwrap();
+            // Request
+            assert_eq!(response.request.method(), http::Method::GET);
+            assert_eq!(
+                response.request.url().path(),
+                "/api/v2/podcasts/adfsddf/recommendations"
+            );
+            let p = response.request.url().query_pairs();
+            assert_eq!(p.count(), 0);
+            // Response
+            let body = response.json().await.unwrap();
+            assert!(body.is_object());
+            assert!(body["recommendations"].as_array().unwrap().len() > 0);
+        });
+    }
+
+    #[test]
+    fn fetch_recommendations_for_episode() {
+        b!(async {
+            let response = client()
+                .fetch_recommendations_for_episode("asdfasdf", &json!({}))
+                .await
+                .unwrap();
+            // Request
+            assert_eq!(response.request.method(), http::Method::GET);
+            assert_eq!(
+                response.request.url().path(),
+                "/api/v2/episodes/asdfasdf/recommendations"
+            );
+            let p = response.request.url().query_pairs();
+            assert_eq!(p.count(), 0);
+            // Response
+            let body = response.json().await.unwrap();
+            assert!(body.is_object());
+            assert!(body["recommendations"].as_array().unwrap().len() > 0);
+        });
+    }
+
+    #[test]
+    fn fetch_playlist_by_id() {
+        b!(async {
+            let response = client().fetch_playlist_by_id("fdsafdsa", &json!({})).await.unwrap();
+            // Request
+            assert_eq!(response.request.method(), http::Method::GET);
+            assert_eq!(response.request.url().path(), "/api/v2/playlists/fdsafdsa");
+            let p = response.request.url().query_pairs();
+            assert_eq!(p.count(), 0);
+            // Response
+            let body = response.json().await.unwrap();
+            assert!(body.is_object());
+            assert!(body["items"].as_array().unwrap().len() > 0);
+        });
+    }
+
+    #[test]
+    fn fetch_my_playlists() {
+        b!(async {
+            let response = client()
+                .fetch_my_playlists(&json!({
+                    "page": 2
+                }))
+                .await
+                .unwrap();
+            // Request
+            assert_eq!(response.request.method(), http::Method::GET);
+            assert_eq!(response.request.url().path(), "/api/v2/playlists");
+            let mut p = response.request.url().query_pairs();
+            assert_eq!(p.count(), 1);
+            assert_eq!(p.next(), Some((Cow::Borrowed("page"), Cow::Borrowed("2"))));
+            // Response
+            let body = response.json().await.unwrap();
+            assert!(body.is_object());
+            assert!(body["playlists"].as_array().unwrap().len() > 0);
+        });
+    }
+
+    #[test]
+    fn submit_podcast() {
+        b!(async {
+            let response = client()
+                .submit_podcast(&json!({
+                    "rss": "http://myrss.com/rss"
+                }))
+                .await
+                .unwrap();
+            // Request
+            assert_eq!(response.request.method(), http::Method::POST);
+            assert_eq!(response.request.url().path(), "/api/v2/podcasts/submit");
+            let mut p = form_urlencoded::parse(response.request.body().unwrap().as_bytes().unwrap());
+            assert_eq!(p.count(), 1);
+            assert_eq!(
+                p.next(),
+                Some((Cow::Borrowed("rss"), Cow::Borrowed("http://myrss.com/rss")))
+            );
+            // Response
+            let body = response.json().await.unwrap();
+            assert!(body.is_object());
+            assert!(body["status"].as_str().unwrap().len() > 0);
+        });
+    }
+
+    #[test]
+    fn delete_podcast() {
+        b!(async {
+            let response = client().delete_podcast("asdfasdfdf", &json!({})).await.unwrap();
+            // Request
+            assert_eq!(response.request.method(), http::Method::DELETE);
+            assert_eq!(response.request.url().path(), "/api/v2/podcasts/asdfasdfdf");
+            let p = response.request.url().query_pairs();
+            assert_eq!(p.count(), 0);
+            // Response
+            let body = response.json().await.unwrap();
+            assert!(body.is_object());
+            assert!(body["status"].as_str().unwrap().len() > 0);
+        });
+    }
 }
