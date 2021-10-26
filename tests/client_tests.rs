@@ -77,6 +77,70 @@ mod mock {
     }
 
     #[test]
+    fn spellcheck() {
+        b!(async {
+            let response = client()
+                .spellcheck(&json!({
+                    "q": "dummy"
+                }))
+                .await
+                .unwrap();
+            // Request
+            assert_eq!(response.request.method(), http::Method::GET);
+            assert_eq!(response.request.url().path(), "/api/v2/spellcheck");
+            let mut p = response.request.url().query_pairs();
+            assert_eq!(p.count(), 1);
+            assert_eq!(p.next(), Some((Cow::Borrowed("q"), Cow::Borrowed("dummy"))));
+            // Response
+            let body = response.json().await.unwrap();
+            assert!(body.is_object());
+            assert!(body["tokens"].as_array().unwrap().len() > 0);
+        });
+    }    
+
+    #[test]
+    fn related_searches() {
+        b!(async {
+            let response = client()
+                .fetch_related_searches(&json!({
+                    "q": "dummy"
+                }))
+                .await
+                .unwrap();
+            // Request
+            assert_eq!(response.request.method(), http::Method::GET);
+            assert_eq!(response.request.url().path(), "/api/v2/related_searches");
+            let mut p = response.request.url().query_pairs();
+            assert_eq!(p.count(), 1);
+            assert_eq!(p.next(), Some((Cow::Borrowed("q"), Cow::Borrowed("dummy"))));
+            // Response
+            let body = response.json().await.unwrap();
+            assert!(body.is_object());
+            assert!(body["terms"].as_array().unwrap().len() > 0);
+        });
+    } 
+
+    #[test]
+    fn trending_searches() {
+        b!(async {
+            let response = client()
+                .fetch_trending_searches(&json!({
+                }))
+                .await
+                .unwrap();
+            // Request
+            assert_eq!(response.request.method(), http::Method::GET);
+            assert_eq!(response.request.url().path(), "/api/v2/trending_searches");
+            let mut p = response.request.url().query_pairs();
+            assert_eq!(p.count(), 0);
+            // Response
+            let body = response.json().await.unwrap();
+            assert!(body.is_object());
+            assert!(body["terms"].as_array().unwrap().len() > 0);
+        });
+    }
+
+    #[test]
     fn fetch_best_podcasts() {
         b!(async {
             let response = client()
