@@ -52,7 +52,7 @@ If you have any questions, please contact [hello@listennotes.com](hello@listenno
 
 ## Installation
 
-Add the following line to your `Cargo.toml` file's dependencies section:
+Install [podcast-api from crates.io](https://crates.io/crates/podcast-api). Add the following line to your `Cargo.toml` file's dependencies section:
 
 ```toml
 [dependencies]
