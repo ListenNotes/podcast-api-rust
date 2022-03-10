@@ -56,7 +56,7 @@ Install [podcast-api from crates.io](https://crates.io/crates/podcast-api). Add 
 
 ```toml
 [dependencies]
-podcast-api = "1.1.0"
+podcast-api = "1.1.1"
 ```
 
 ## Usage
@@ -122,7 +122,7 @@ Unsuccessful requests return errors.
 | ------------- | ------------- |
 |  AuthenticationError | wrong api key or your account is suspended  |
 | InvalidRequestError  | something wrong on your end (client side errors), e.g., missing required parameters  |
-| RateLimitError  | you are using FREE plan and you exceed the quota limit  |
+| RateLimitError  | for FREE plan, exceeding the quota limit; or for all plans, sending too many requests too fast and exceeding the rate limit  |
 | NotFoundError  | endpoint not exist, or podcast / episode not exist  |
 | ApiConnectionError | failed to connect to Listen API servers | 
 | ListenApiError  | something wrong on our end (unexpected server errors)  |

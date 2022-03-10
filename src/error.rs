@@ -7,7 +7,8 @@ pub enum Error {
     ApiConnectionError,
     /// Something wrong on your end (client side errors), e.g., missing required parameters.
     InvalidRequestError,
-    /// You are using FREE plan and you exceed the quota limit.
+    /// For FREE plan, exceeding the quota limit; or for all plans, sending too many requests
+    /// too fast and exceeding the rate limit - https://www.listennotes.com/api/faq/#faq17
     RateLimitError,
     /// Endpoint not exist, or podcast / episode not exist.
     NotFoundError,
@@ -57,7 +58,12 @@ impl std::fmt::Display for Error {
                 )
             }
             Error::RateLimitError => {
-                write!(f, "You are using FREE plan and you exceed the quota limit.")
+                write!(
+                    f,
+                    "For FREE plan, exceeding the quota limit; or for all plans, sending too many 
+                    requests too fast and exceeding the rate limit 
+                    - https://www.listennotes.com/api/faq/#faq17"
+                )
             }
             Error::NotFoundError => {
                 write!(f, "Endpoint not exist, or podcast / episode not exist.")

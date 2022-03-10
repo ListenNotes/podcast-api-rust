@@ -90,17 +90,17 @@ impl Client<'_> {
     /// Calls [`GET /spellcheck`](https://www.listennotes.com/api/docs/#get-api-v2-spellcheck) with supplied parameters.
     pub async fn spellcheck(&self, parameters: &Value) -> Result<Response> {
         self.get("spellcheck", parameters).await
-    }    
+    }
 
     /// Calls [`GET /related_searches`](https://www.listennotes.com/api/docs/#get-api-v2-related_searches) with supplied parameters.
     pub async fn fetch_related_searches(&self, parameters: &Value) -> Result<Response> {
         self.get("related_searches", parameters).await
-    } 
-    
+    }
+
     /// Calls [`GET /trending_searches`](https://www.listennotes.com/api/docs/#get-api-v2-trending_searches) with supplied parameters.
     pub async fn fetch_trending_searches(&self, parameters: &Value) -> Result<Response> {
         self.get("trending_searches", parameters).await
-    }     
+    }
 
     /// Calls [`GET /best_podcasts`](https://www.listennotes.com/api/docs/#get-api-v2-best_podcasts) with supplied parameters.
     pub async fn fetch_best_podcasts(&self, parameters: &Value) -> Result<Response> {
