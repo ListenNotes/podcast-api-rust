@@ -77,22 +77,22 @@ impl Client<'_> {
         }
     }
 
-    /// Calls [`GET /search`](https://www.listennotes.com/api/docs/#get-api-v2-search) with supplied parameters.
+    /// Calls [`GET /search`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-search) with supplied parameters.
     pub async fn search(&self, parameters: &Value) -> Result<Response> {
         self.get("search", parameters).await
     }
 
-    /// Calls [`GET /typeahead`](https://www.listennotes.com/api/docs/#get-api-v2-typeahead) with supplied parameters.
+    /// Calls [`GET /typeahead`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-typeahead) with supplied parameters.
     pub async fn typeahead(&self, parameters: &Value) -> Result<Response> {
         self.get("typeahead", parameters).await
     }
 
-    /// Calls [`GET /spellcheck`](https://www.listennotes.com/api/docs/#get-api-v2-spellcheck) with supplied parameters.
+    /// Calls [`GET /spellcheck`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-spellcheck) with supplied parameters.
     pub async fn spellcheck(&self, parameters: &Value) -> Result<Response> {
         self.get("spellcheck", parameters).await
     }
 
-    /// Calls [`GET /related_searches`](https://www.listennotes.com/api/docs/#get-api-v2-related_searches) with supplied parameters.
+    /// Calls [`GET /related_searches`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-related_searches) with supplied parameters.
     pub async fn fetch_related_searches(&self, parameters: &Value) -> Result<Response> {
         self.get("related_searches", parameters).await
     }
@@ -102,62 +102,62 @@ impl Client<'_> {
         self.get("trending_searches", parameters).await
     }
 
-    /// Calls [`GET /best_podcasts`](https://www.listennotes.com/api/docs/#get-api-v2-best_podcasts) with supplied parameters.
+    /// Calls [`GET /best_podcasts`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-best_podcasts) with supplied parameters.
     pub async fn fetch_best_podcasts(&self, parameters: &Value) -> Result<Response> {
         self.get("best_podcasts", parameters).await
     }
 
-    /// Calls [`GET /podcasts/{id}`](https://www.listennotes.com/api/docs/#get-api-v2-podcasts-id) with supplied parameters.
+    /// Calls [`GET /podcasts/{id}`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-podcasts-id) with supplied parameters.
     pub async fn fetch_podcast_by_id(&self, id: &str, parameters: &Value) -> Result<Response> {
         self.get(&format!("podcasts/{}", id), parameters).await
     }
 
-    /// Calls [`POST /podcasts`](https://www.listennotes.com/api/docs/#post-api-v2-podcasts) with supplied parameters.
+    /// Calls [`POST /podcasts`](https://www.listennotes.com/podcast-api/docs/#post-api-v2-podcasts) with supplied parameters.
     pub async fn batch_fetch_podcasts(&self, parameters: &Value) -> Result<Response> {
         self.post("podcasts", parameters).await
     }
 
-    /// Calls [`GET /episodes/{id}`](https://www.listennotes.com/api/docs/#get-api-v2-episodes-id) with supplied parameters.
+    /// Calls [`GET /episodes/{id}`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-episodes-id) with supplied parameters.
     pub async fn fetch_episode_by_id(&self, id: &str, parameters: &Value) -> Result<Response> {
         self.get(&format!("episodes/{}", id), parameters).await
     }
 
-    /// Calls [`POST /episodes`](https://www.listennotes.com/api/docs/#post-api-v2-episodes) with supplied parameters.
+    /// Calls [`POST /episodes`](https://www.listennotes.com/podcast-api/docs/#post-api-v2-episodes) with supplied parameters.
     pub async fn batch_fetch_episodes(&self, parameters: &Value) -> Result<Response> {
         self.post("episodes", parameters).await
     }
 
-    /// Calls [`GET /curated_podcasts/{id}`](https://www.listennotes.com/api/docs/#get-api-v2-curated_podcasts-id) with supplied parameters.
+    /// Calls [`GET /curated_podcasts/{id}`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-curated_podcasts-id) with supplied parameters.
     pub async fn fetch_curated_podcasts_list_by_id(&self, id: &str, parameters: &Value) -> Result<Response> {
         self.get(&format!("curated_podcasts/{}", id), parameters).await
     }
 
-    /// Calls [`GET /curated_podcasts`](https://www.listennotes.com/api/docs/#get-api-v2-curated_podcasts) with supplied parameters.
+    /// Calls [`GET /curated_podcasts`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-curated_podcasts) with supplied parameters.
     pub async fn fetch_curated_podcasts_lists(&self, parameters: &Value) -> Result<Response> {
         self.get("curated_podcasts", parameters).await
     }
 
-    /// Calls [`GET /genres`](https://www.listennotes.com/api/docs/#get-api-v2-genres) with supplied parameters.
+    /// Calls [`GET /genres`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-genres) with supplied parameters.
     pub async fn fetch_podcast_genres(&self, parameters: &Value) -> Result<Response> {
         self.get("genres", parameters).await
     }
 
-    /// Calls [`GET /regions`](https://www.listennotes.com/api/docs/#get-api-v2-regions) with supplied parameters.
+    /// Calls [`GET /regions`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-regions) with supplied parameters.
     pub async fn fetch_podcast_regions(&self, parameters: &Value) -> Result<Response> {
         self.get("regions", parameters).await
     }
 
-    /// Calls [`GET /languages`](https://www.listennotes.com/api/docs/#get-api-v2-languages) with supplied parameters.
+    /// Calls [`GET /languages`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-languages) with supplied parameters.
     pub async fn fetch_podcast_languages(&self, parameters: &Value) -> Result<Response> {
         self.get("languages", parameters).await
     }
 
-    /// Calls [`GET /just_listen`](https://www.listennotes.com/api/docs/#get-api-v2-just_listen) with supplied parameters.
+    /// Calls [`GET /just_listen`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-just_listen) with supplied parameters.
     pub async fn just_listen(&self, parameters: &Value) -> Result<Response> {
         self.get("just_listen", parameters).await
     }
 
-    /// Calls [`GET /podcasts/{id}/recommendations`](https://www.listennotes.com/api/docs/#get-api-v2-podcasts-id-recommendations) with supplied parameters.
+    /// Calls [`GET /podcasts/{id}/recommendations`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-podcasts-id-recommendations) with supplied parameters.
     pub async fn fetch_recommendations_for_podcast(&self, id: &str, parameters: &Value) -> Result<Response> {
         self.get(&format!("podcasts/{}/recommendations", id), parameters).await
     }
@@ -167,24 +167,29 @@ impl Client<'_> {
         self.get(&format!("episodes/{}/recommendations", id), parameters).await
     }
 
-    /// Calls [`GET /playlists/{id}`](https://www.listennotes.com/api/docs/#get-api-v2-playlists-id) with supplied parameters.
+    /// Calls [`GET /playlists/{id}`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-playlists-id) with supplied parameters.
     pub async fn fetch_playlist_by_id(&self, id: &str, parameters: &Value) -> Result<Response> {
         self.get(&format!("playlists/{}", id), parameters).await
     }
 
-    /// Calls [`GET /playlists`](https://www.listennotes.com/api/docs/#get-api-v2-playlists) with supplied parameters.
+    /// Calls [`GET /playlists`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-playlists) with supplied parameters.
     pub async fn fetch_my_playlists(&self, parameters: &Value) -> Result<Response> {
         self.get("playlists", parameters).await
     }
 
-    /// Calls [`POST /podcasts/submit`](https://www.listennotes.com/api/docs/#post-api-v2-podcasts-submit) with supplied parameters.
+    /// Calls [`POST /podcasts/submit`](https://www.listennotes.com/podcast-api/docs/#post-api-v2-podcasts-submit) with supplied parameters.
     pub async fn submit_podcast(&self, parameters: &Value) -> Result<Response> {
         self.post("podcasts/submit", parameters).await
     }
 
-    /// Calls [`DELETE /podcasts/{id}`](https://www.listennotes.com/api/docs/#delete-api-v2-podcasts-id) with supplied parameters.
+    /// Calls [`DELETE /podcasts/{id}`](https://www.listennotes.com/podcast-api/docs/#delete-api-v2-podcasts-id) with supplied parameters.
     pub async fn delete_podcast(&self, id: &str, parameters: &Value) -> Result<Response> {
         self.delete(&format!("podcasts/{}", id), parameters).await
+    }
+
+    /// Calls [`GET /podcasts/{id}/audience`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-podcasts-id-audience) with supplied parameters.
+    pub async fn fetch_audience_for_podcast(&self, id: &str, parameters: &Value) -> Result<Response> {
+        self.get(&format!("podcasts/{}/audience", id), parameters).await
     }
 
     async fn get(&self, endpoint: &str, parameters: &Value) -> Result<Response> {
