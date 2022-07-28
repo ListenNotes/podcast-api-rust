@@ -1,6 +1,6 @@
 # Podcast API Rust Library
 
-[![Rust](https://github.com/ListenNotes/podcast-api-rust/actions/workflows/rust.yml/badge.svg)](https://github.com/ListenNotes/podcast-api-rust/actions/workflows/rust.yml)
+[![Rust](https://github.com/ListenNotes/podcast-api-rust/actions/workflows/rust.yml/badge.svg)](https://github.com/ListenNotes/podcast-api-rust/actions/workflows/rust.yml) [![Crates.io](https://img.shields.io/crates/v/podcast-api)](https://crates.io/crates/podcast-api)
 
 
 The Podcast API Rust library provides convenient access to the [Listen Notes Podcast API](https://www.listennotes.com/podcast-api/) from
