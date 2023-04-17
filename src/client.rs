@@ -192,6 +192,11 @@ impl Client<'_> {
         self.get(&format!("podcasts/{}/audience", id), parameters).await
     }
 
+    /// Calls [`GET /podcasts/domains/{domain_name}`](https://www.listennotes.com/api/docs/#get-api-v2-podcasts-domains-domain_name) with supplied parameters.
+    pub async fn fetch_podcasts_by_domain(&self, domain_name: &str, parameters: &Value) -> Result<Response> {
+        self.get(&format!("podcasts/domains/{}", domain_name), parameters).await
+    }    
+
     async fn get(&self, endpoint: &str, parameters: &Value) -> Result<Response> {
         let request = self
             .client

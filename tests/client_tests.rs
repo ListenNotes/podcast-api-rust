@@ -495,4 +495,28 @@ mod mock {
             assert!(body["by_regions"].as_array().unwrap().len() > 0);
         });
     }    
+
+    #[test]
+    fn fetch_podcasts_by_domain() {
+        b!(async {
+            let response = client()
+                .fetch_podcasts_by_domain("nytimes.com", &json!({
+                    "page": "1",
+                }))
+                .await
+                .unwrap();
+            // Request
+            assert_eq!(response.request.method(), http::Method::GET);
+            assert_eq!(
+                response.request.url().path(),
+                "/api/v2/podcasts/domains/nytimes.com"
+            );
+            let p = response.request.url().query_pairs();
+            assert_eq!(p.count(), 1);
+            // Response
+            let body = response.json().await.unwrap();
+            assert!(body.is_object());
+            assert!(body["podcasts"].as_array().unwrap().len() > 0);
+        });
+    }      
 }
