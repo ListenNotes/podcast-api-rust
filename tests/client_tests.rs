@@ -37,6 +37,30 @@ mod mock {
     }
 
     #[test]
+    fn search_episode_titles() {
+        b!(async {
+            let response = client()
+                .search_episode_titles(&json!({
+                        "q": "dummy",
+                        "podcast_id": "sfaffs1"
+                }))
+                .await
+                .unwrap();
+            // Request
+            assert_eq!(response.request.method(), http::Method::GET);
+            assert_eq!(response.request.url().path(), "/api/v2/search_episode_titles");
+            let mut p = response.request.url().query_pairs();
+            assert_eq!(p.count(), 2);
+            assert_eq!(p.next(), Some((Cow::Borrowed("podcast_id"), Cow::Borrowed("sfaffs1"))));
+            assert_eq!(p.next(), Some((Cow::Borrowed("q"), Cow::Borrowed("dummy"))));
+            // Response
+            let body = response.json().await.unwrap();
+            assert!(body.is_object());
+            assert!(body["results"].as_array().unwrap().len() > 0);
+        });
+    }
+
+    #[test]
     fn search_with_authentication_error() {
         b!(async {
             let response = podcast_api::Client::new(Some("wrong_key"))

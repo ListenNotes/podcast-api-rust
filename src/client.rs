@@ -82,6 +82,11 @@ impl Client<'_> {
         self.get("search", parameters).await
     }
 
+    /// Calls [`GET /search_episode_titles`](https://www.listennotes.com/api/docs/#get-api-v2-search_episode_titles) with supplied parameters.
+    pub async fn search_episode_titles(&self, parameters: &Value) -> Result<Response> {
+        self.get("search_episode_titles", parameters).await
+    }    
+
     /// Calls [`GET /typeahead`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-typeahead) with supplied parameters.
     pub async fn typeahead(&self, parameters: &Value) -> Result<Response> {
         self.get("typeahead", parameters).await
