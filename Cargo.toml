@@ -1,24 +1,22 @@
 [package]
 name = "podcast-api"
-version = "1.1.6"
+version = "3.0.0"
 authors = ["Listen Notes, Inc. <hello@listennotes.com>"]
-edition = "2018"
+edition = "2024"
+rust-version = "1.88"
 description = "Rust bindings for the Listen Notes Podcast API"
 license = "MIT"
 keywords = ["listennotes", "podcast", "searchengine", "podcastsearch"]
-documentation = "https://www.listennotes.com/api/docs/"
+documentation = "https://docs.rs/podcast-api"
 repository = "https://github.com/ListenNotes/podcast-api-rust"
 readme = "README.md"
 homepage = "https://www.listennotes.com/api/"
 categories = ["api-bindings", "multimedia::audio", "multimedia"]
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+include = ["src/**", "tests/**", "examples/sample.rs", "Cargo.toml", "Cargo.lock", "README.md", "LICENSE"]
 
 [dependencies]
-form_urlencoded = "1"
-http = "0.2"
-serde = { version = "1", features = ["derive"] } 
-serde_json = "1"
-tokio = { version = "1", features = ["full"] }
-tokio-test = "0.4"
-reqwest = { version = "0.11", features = ["json"] }
+reqwest = { version = "0.13.5", default-features = false, features = ["json", "query", "form", "rustls"] }
+serde_json = "1.0.150"
+
+[dev-dependencies]
+tokio = { version = "1.53.0", features = ["macros", "rt-multi-thread", "net", "io-util", "time"] }
