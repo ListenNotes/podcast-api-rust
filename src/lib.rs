@@ -2,7 +2,7 @@
 //!
 //! # Quick Start Example
 //!
-//! ```
+//! ```no_run
 //! use serde_json::json;
 //!
 //! #[tokio::main]
@@ -36,6 +36,7 @@
 #![deny(missing_docs)]
 
 mod api;
+mod api_methods;
 mod client;
 mod error;
 
@@ -43,6 +44,11 @@ use api::Api;
 
 pub use client::Client;
 pub use client::Response;
-pub use error::Error;
+pub use error::{ApiError, Error};
 /// Result for API calls from [`Client`]
 pub type Result<T> = std::result::Result<T, error::Error>;
+
+#[doc = include_str!("../README.md")]
+// Canonical API descriptions use GitHub Markdown's automatic bare-URL links.
+#[allow(rustdoc::bare_urls)]
+mod readme {}

@@ -1,306 +1,162 @@
-use super::{Api, Error, Result};
-use http::StatusCode;
-use reqwest::RequestBuilder;
+use super::{Api, ApiError, Error, Result};
+use reqwest::{Method, Url, header::HeaderValue};
 use serde_json::Value;
 use std::time::Duration;
 
-static DEFAULT_USER_AGENT: &str = "api-podcast-rust";
+const DEFAULT_USER_AGENT: &str = concat!("podcast-api-rust ", env!("CARGO_PKG_VERSION"));
 
-/// Client for accessing Listen Notes API.
+/// Client for accessing Listen Notes API. Each instance owns its HTTP configuration.
 pub struct Client<'a> {
-    /// HTTP client.
     client: reqwest::Client,
-    /// API context.
     api: Api<'a>,
-    /// User Agent Header for API calls.
     user_agent: &'a str,
+    base_url: Url,
 }
 
+/// Response and request context for an API call.
 #[derive(Debug)]
-/// Response and request context for API call.
 pub struct Response {
-    /// HTTP response.
+    /// HTTP response, including status and response headers.
     pub response: reqwest::Response,
-    /// HTTP request that resulted in this response.
+    /// HTTP request that resulted in this response. API key headers are sensitive.
     pub request: reqwest::Request,
 }
 
 impl Response {
-    /// Get JSON data object from [`reqwest::Response`].
+    /// Consume the response and deserialize its JSON body.
     pub async fn json(self) -> Result<Value> {
         Ok(self.response.json().await?)
     }
 }
 
-impl Client<'_> {
-    /// Creates new Listen API Client.
-    ///
-    /// Uses default HTTP client with 30 second timeouts.
-    ///
-    /// To access production API:
-    /// ```
-    /// let client = podcast_api::Client::new(Some("YOUR-API-KEY"));
-    /// ```
-    /// To access mock API:
-    /// ```
-    /// let client = podcast_api::Client::new(None);
-    /// ```
-    pub fn new(id: Option<&str>) -> Client {
-        Client {
-            client: reqwest::ClientBuilder::new()
-                .timeout(Duration::from_secs(30))
+impl<'a> Client<'a> {
+    /// Create a production client with an API key, or a public mock client with `None`.
+    /// Uses a 30-second total timeout and a 10-second connection timeout.
+    pub fn new(api_key: Option<&'a str>) -> Self {
+        Self::new_custom(
+            Self::http_client_builder()
                 .build()
-                .expect("Client::new()"),
-            api: if let Some(id) = id {
-                Api::Production(id)
-            } else {
-                Api::Mock
-            },
-            user_agent: DEFAULT_USER_AGENT,
-        }
+                .expect("build Listen API HTTP client"),
+            api_key,
+            None,
+        )
     }
 
-    /// Creates new Listen API Client with user provided HTTP Client.
-    pub fn new_custom<'a>(client: reqwest::Client, id: Option<&'a str>, user_agent: Option<&'a str>) -> Client<'a> {
-        Client {
+    /// Start with the SDK's timeout, no-redirect, and no-retry defaults.
+    /// Use this builder with [`Self::new_custom`] to customize proxies or timeouts.
+    pub fn http_client_builder() -> reqwest::ClientBuilder {
+        reqwest::Client::builder()
+            .timeout(Duration::from_secs(30))
+            .connect_timeout(Duration::from_secs(10))
+            .redirect(reqwest::redirect::Policy::none())
+            .retry(reqwest::retry::never())
+    }
+
+    /// Create a client with a supplied HTTP client and optional User-Agent.
+    /// The caller controls that HTTP client's timeout, proxy, redirect, and retry policies.
+    pub fn new_custom(client: reqwest::Client, api_key: Option<&'a str>, user_agent: Option<&'a str>) -> Self {
+        let api = api_key.map_or(Api::Mock, Api::Production);
+        let base_url = Url::parse(api.url()).expect("valid Listen API base URL");
+        Self {
             client,
-            api: if let Some(id) = id {
-                Api::Production(id)
-            } else {
-                Api::Mock
-            },
-            user_agent: if let Some(user_agent) = user_agent {
-                user_agent
-            } else {
-                DEFAULT_USER_AGENT
-            },
+            api,
+            user_agent: user_agent.unwrap_or(DEFAULT_USER_AGENT),
+            base_url,
         }
     }
 
-    /// Calls [`GET /search`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-search) with supplied parameters.
-    pub async fn search(&self, parameters: &Value) -> Result<Response> {
-        self.get("search", parameters).await
-    }
-
-    /// Calls [`GET /search_episode_titles`](https://www.listennotes.com/api/docs/#get-api-v2-search_episode_titles) with supplied parameters.
-    pub async fn search_episode_titles(&self, parameters: &Value) -> Result<Response> {
-        self.get("search_episode_titles", parameters).await
-    }    
-
-    /// Calls [`GET /typeahead`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-typeahead) with supplied parameters.
-    pub async fn typeahead(&self, parameters: &Value) -> Result<Response> {
-        self.get("typeahead", parameters).await
-    }
-
-    /// Calls [`GET /spellcheck`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-spellcheck) with supplied parameters.
-    pub async fn spellcheck(&self, parameters: &Value) -> Result<Response> {
-        self.get("spellcheck", parameters).await
-    }
-
-    /// Calls [`GET /related_searches`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-related_searches) with supplied parameters.
-    pub async fn fetch_related_searches(&self, parameters: &Value) -> Result<Response> {
-        self.get("related_searches", parameters).await
-    }
-
-    /// Calls [`GET /trending_searches`](https://www.listennotes.com/api/docs/#get-api-v2-trending_searches) with supplied parameters.
-    pub async fn fetch_trending_searches(&self, parameters: &Value) -> Result<Response> {
-        self.get("trending_searches", parameters).await
-    }
-
-    /// Calls [`GET /best_podcasts`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-best_podcasts) with supplied parameters.
-    pub async fn fetch_best_podcasts(&self, parameters: &Value) -> Result<Response> {
-        self.get("best_podcasts", parameters).await
-    }
-
-    /// Calls [`GET /podcasts/{id}`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-podcasts-id) with supplied parameters.
-    pub async fn fetch_podcast_by_id(&self, id: &str, parameters: &Value) -> Result<Response> {
-        self.get(&format!("podcasts/{}", id), parameters).await
-    }
-
-    /// Calls [`POST /podcasts`](https://www.listennotes.com/podcast-api/docs/#post-api-v2-podcasts) with supplied parameters.
-    pub async fn batch_fetch_podcasts(&self, parameters: &Value) -> Result<Response> {
-        self.post("podcasts", parameters).await
-    }
-
-    /// Calls [`GET /episodes/{id}`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-episodes-id) with supplied parameters.
-    pub async fn fetch_episode_by_id(&self, id: &str, parameters: &Value) -> Result<Response> {
-        self.get(&format!("episodes/{}", id), parameters).await
-    }
-
-    /// Calls [`POST /episodes`](https://www.listennotes.com/podcast-api/docs/#post-api-v2-episodes) with supplied parameters.
-    pub async fn batch_fetch_episodes(&self, parameters: &Value) -> Result<Response> {
-        self.post("episodes", parameters).await
-    }
-
-    /// Calls [`GET /curated_podcasts/{id}`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-curated_podcasts-id) with supplied parameters.
-    pub async fn fetch_curated_podcasts_list_by_id(&self, id: &str, parameters: &Value) -> Result<Response> {
-        self.get(&format!("curated_podcasts/{}", id), parameters).await
-    }
-
-    /// Calls [`GET /curated_podcasts`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-curated_podcasts) with supplied parameters.
-    pub async fn fetch_curated_podcasts_lists(&self, parameters: &Value) -> Result<Response> {
-        self.get("curated_podcasts", parameters).await
-    }
-
-    /// Calls [`GET /genres`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-genres) with supplied parameters.
-    pub async fn fetch_podcast_genres(&self, parameters: &Value) -> Result<Response> {
-        self.get("genres", parameters).await
-    }
-
-    /// Calls [`GET /regions`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-regions) with supplied parameters.
-    pub async fn fetch_podcast_regions(&self, parameters: &Value) -> Result<Response> {
-        self.get("regions", parameters).await
-    }
-
-    /// Calls [`GET /languages`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-languages) with supplied parameters.
-    pub async fn fetch_podcast_languages(&self, parameters: &Value) -> Result<Response> {
-        self.get("languages", parameters).await
-    }
-
-    /// Calls [`GET /just_listen`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-just_listen) with supplied parameters.
-    pub async fn just_listen(&self, parameters: &Value) -> Result<Response> {
-        self.get("just_listen", parameters).await
-    }
-
-    /// Calls [`GET /podcasts/{id}/recommendations`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-podcasts-id-recommendations) with supplied parameters.
-    pub async fn fetch_recommendations_for_podcast(&self, id: &str, parameters: &Value) -> Result<Response> {
-        self.get(&format!("podcasts/{}/recommendations", id), parameters).await
-    }
-
-    /// Calls [`GET /episodes/{id}/recommendations`](https://www.listennotes.com/api/docs/#get-api-v2-episodes-id-recommendations) with supplied parameters.
-    pub async fn fetch_recommendations_for_episode(&self, id: &str, parameters: &Value) -> Result<Response> {
-        self.get(&format!("episodes/{}/recommendations", id), parameters).await
-    }
-
-    /// Calls [`GET /playlists/{id}`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-playlists-id) with supplied parameters.
-    pub async fn fetch_playlist_by_id(&self, id: &str, parameters: &Value) -> Result<Response> {
-        self.get(&format!("playlists/{}", id), parameters).await
-    }
-
-    /// Calls [`GET /playlists`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-playlists) with supplied parameters.
-    pub async fn fetch_my_playlists(&self, parameters: &Value) -> Result<Response> {
-        self.get("playlists", parameters).await
-    }
-
-    /// Calls [`POST /podcasts/submit`](https://www.listennotes.com/podcast-api/docs/#post-api-v2-podcasts-submit) with supplied parameters.
-    pub async fn submit_podcast(&self, parameters: &Value) -> Result<Response> {
-        self.post("podcasts/submit", parameters).await
-    }
-
-    /// Calls [`DELETE /podcasts/{id}`](https://www.listennotes.com/podcast-api/docs/#delete-api-v2-podcasts-id) with supplied parameters.
-    pub async fn delete_podcast(&self, id: &str, parameters: &Value) -> Result<Response> {
-        self.delete(&format!("podcasts/{}", id), parameters).await
-    }
-
-    /// Calls [`GET /podcasts/{id}/audience`](https://www.listennotes.com/podcast-api/docs/#get-api-v2-podcasts-id-audience) with supplied parameters.
-    pub async fn fetch_audience_for_podcast(&self, id: &str, parameters: &Value) -> Result<Response> {
-        self.get(&format!("podcasts/{}/audience", id), parameters).await
-    }
-
-    /// Calls [`GET /podcasts/domains/{domain_name}`](https://www.listennotes.com/api/docs/#get-api-v2-podcasts-domains-domain_name) with supplied parameters.
-    pub async fn fetch_podcasts_by_domain(&self, domain_name: &str, parameters: &Value) -> Result<Response> {
-        self.get(&format!("podcasts/domains/{}", domain_name), parameters).await
-    }    
-
-    async fn get(&self, endpoint: &str, parameters: &Value) -> Result<Response> {
-        let request = self
-            .client
-            .get(format!("{}/{}", self.api.url(), endpoint))
-            .query(parameters);
-
-        Ok(self.request(request).await?)
-    }
-
-    async fn post(&self, endpoint: &str, parameters: &Value) -> Result<Response> {
-        let request = self
-            .client
-            .post(format!("{}/{}", self.api.url(), endpoint))
-            .header("Content-Type", "application/x-www-form-urlencoded")
-            .body(Self::urlencoded_from_json(parameters));
-
-        Ok(self.request(request).await?)
-    }
-
-    async fn delete(&self, endpoint: &str, parameters: &Value) -> Result<Response> {
-        let request = self
-            .client
-            .delete(format!("{}/{}", self.api.url(), endpoint))
-            .query(parameters);
-
-        Ok(self.request(request).await?)
-    }
-
-    async fn request(&self, request: RequestBuilder) -> Result<Response> {
-        let request = if let Api::Production(key) = self.api {
-            request.header("X-ListenAPI-Key", key)
-        } else {
-            request
+    /// Override the API base URL, for example for a local test server.
+    /// Requests send this client's credentials to the supplied server.
+    pub fn with_base_url(mut self, base_url: &str) -> Result<Self> {
+        let url = Url::parse(base_url).map_err(|_| Error::InvalidParameter("invalid base URL".into()))?;
+        if !matches!(url.scheme(), "http" | "https")
+            || url.host_str().is_none()
+            || !url.username().is_empty()
+            || url.password().is_some()
+            || url.query().is_some()
+            || url.fragment().is_some()
+        {
+            return Err(Error::InvalidParameter(
+                "base URL must be HTTP(S) without credentials, query, or fragment".into(),
+            ));
         }
-        .header("User-Agent", self.user_agent)
-        .build()?;
+        self.base_url = url;
+        Ok(self)
+    }
 
-        let response = self
-            .client
-            .execute(request.try_clone().expect(
-                "Error can remain unhandled because we're not using streams, which are the try_clone fail condition",
-            ))
-            .await;
-
-        match &response {
-            Ok(response) => match response.status() {
-                StatusCode::NOT_FOUND => return Err(Error::NotFoundError),
-                StatusCode::UNAUTHORIZED => return Err(Error::AuthenticationError),
-                StatusCode::TOO_MANY_REQUESTS => return Err(Error::RateLimitError),
-                StatusCode::BAD_REQUEST => return Err(Error::InvalidRequestError),
-                StatusCode::INTERNAL_SERVER_ERROR => return Err(Error::ListenApiError),
-                _ => {}
-            },
-            Err(err) => {
-                if err.is_connect() || err.is_timeout() {
-                    return Err(Error::ApiConnectionError);
+    pub(crate) async fn request_api(
+        &self,
+        method: Method,
+        path: &str,
+        path_params: &[(&str, &str)],
+        query_names: &[&str],
+        parameters: &Value,
+    ) -> Result<Response> {
+        let parameters = parameters
+            .as_object()
+            .ok_or_else(|| Error::InvalidParameter("parameters must be a JSON object".into()))?;
+        let mut url = self.base_url.clone();
+        {
+            let mut segments = url
+                .path_segments_mut()
+                .map_err(|_| Error::InvalidParameter("invalid base URL".into()))?;
+            segments.pop_if_empty();
+            for segment in path.trim_start_matches('/').split('/') {
+                if let Some(name) = segment.strip_prefix('{').and_then(|s| s.strip_suffix('}')) {
+                    let value = path_params
+                        .iter()
+                        .find(|(key, _)| *key == name)
+                        .map(|(_, value)| *value)
+                        .ok_or_else(|| Error::InvalidParameter(format!("missing path parameter: {name}")))?;
+                    // URL parsers normalize dot segments; reject them instead of changing endpoints.
+                    if value.is_empty() || value == "." || value == ".." {
+                        return Err(Error::InvalidParameter(format!("invalid path parameter: {name}")));
+                    }
+                    segments.push(value);
+                } else {
+                    segments.push(segment);
                 }
             }
-        };
-
-        Ok(Response {
-            response: response?,
-            request,
-        })
-    }
-
-    fn urlencoded_from_json(json: &Value) -> String {
-        if let Some(v) = json.as_object() {
-            v.iter()
-                .map(|(key, value)| {
-                    format!(
-                        "{}={}",
-                        key,
-                        match value {
-                            Value::String(s) => s.to_owned(), // serde_json String(_) formatter includes the quotations marks, this doesn't
-                            _ => format!("{}", value),
-                        }
-                    )
-                })
-                .collect::<Vec<String>>()
-                .join("&")
-        } else {
-            String::new()
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use serde_json::json;
-    #[test]
-    fn urlencoded_from_json() {
-        assert_eq!(
-            super::Client::urlencoded_from_json(&json!({
-                "a": 1,
-                "b": true,
-                "c": "test_string"
-            })),
-            "a=1&b=true&c=test_string"
-        );
+        let has_body = method == Method::POST || method == Method::PUT;
+        let mut query = Vec::new();
+        let mut body = Vec::new();
+        for (name, value) in parameters {
+            if value.is_null() || path_params.iter().any(|(key, _)| key == name) {
+                continue;
+            }
+            let encoded = value.as_str().map(str::to_owned).unwrap_or_else(|| value.to_string());
+            if !has_body || query_names.contains(&name.as_str()) {
+                query.push((name, encoded));
+            } else {
+                body.push((name, encoded));
+            }
+        }
+        let mut builder = self
+            .client
+            .request(method, url)
+            .query(&query)
+            .header("User-Agent", self.user_agent);
+        if let Api::Production(key) = self.api {
+            let mut header =
+                HeaderValue::from_str(key).map_err(|_| Error::InvalidParameter("invalid API key header".into()))?;
+            header.set_sensitive(true);
+            builder = builder.header("X-ListenAPI-Key", header);
+        }
+        if has_body {
+            builder = builder.form(&body);
+        }
+        let request = builder.build()?;
+        let outgoing = request
+            .try_clone()
+            .ok_or_else(|| Error::InvalidParameter("request body cannot be cloned".into()))?;
+        let response = self.client.execute(outgoing).await?;
+        let status = response.status();
+        if !status.is_success() {
+            let headers = response.headers().clone();
+            let body = response.text().await?;
+            return Err(Error::from_api(Box::new(ApiError { status, headers, body })));
+        }
+        Ok(Response { response, request })
     }
 }
