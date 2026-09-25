@@ -13,7 +13,7 @@ and publishing; no separate package manager is needed.
 
 ```toml
 [dependencies]
-podcast-api = "3.0.0"
+podcast-api = "3.1.0"
 serde_json = "1"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 ```
@@ -130,6 +130,7 @@ crates.io and GitHub release creation are separate review steps.
 - [`fetch_podcasts_by_domain`](#fetch_podcasts_by_domain) — `GET /podcasts/domains/{domain_name}`
 - [`create_playlist`](#create_playlist) — `POST /playlists`
 - [`update_playlist`](#update_playlist) — `PUT /playlists/{id}`
+- [`delete_playlist`](#delete_playlist) — `DELETE /playlists/{id}`
 - [`add_playlist_item`](#add_playlist_item) — `POST /playlists/{id}/items`
 - [`delete_playlist_item`](#delete_playlist_item) — `DELETE /playlists/{id}/items/{item_id}`
 - [`update_playlist_item_notes`](#update_playlist_item_notes) — `PUT /playlists/{id}/items/{item_id}`
@@ -773,6 +774,32 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ```
 
 [Full API documentation](https://www.listennotes.com/api/docs/#put-api-v2-playlists-id)
+
+### delete_playlist
+
+Delete a playlist.
+
+`DELETE /playlists/{id}`
+
+Permanently delete a playlist, including all episode and podcast references saved in this specific playlist and their notes. The actual episodes and podcasts remain in the Listen Notes podcast database.
+
+**Warning: Deletion cannot be undone. Once deleted, the playlist is gone, regardless of how many episodes or podcasts it contains. You, the developer, are responsible for adding a confirmation step in your app's UI before calling this endpoint to prevent accidental deletion.**
+
+Only playlists owned by your admin API account can be modified; contributor membership does not grant write access.
+
+```rust,no_run
+use serde_json::json;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let client = podcast_api::Client::new(None);
+    let response = client.delete_playlist("m1pe7z60bsw", &json!({})).await?;
+    println!("{}", response.json().await?);
+    Ok(())
+}
+```
+
+[Full API documentation](https://www.listennotes.com/api/docs/#delete-api-v2-playlists-id)
 
 ### add_playlist_item
 

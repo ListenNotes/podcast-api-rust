@@ -127,7 +127,7 @@ fn pairs(value: &str) -> BTreeMap<String, String> {
 async fn every_generated_method_obeys_the_contract() {
     let contract = support::contract();
     let operations = contract["operations"].as_array().unwrap();
-    assert_eq!(operations.len(), 30);
+    assert_eq!(operations.len(), 31);
     let fixture = Fixture::new(
         operations
             .iter()
@@ -221,8 +221,31 @@ async fn encodes_nested_paths_and_preserves_empty_and_scalar_values() {
 }
 
 #[tokio::test]
+async fn delete_playlist_encodes_id_without_query_or_body() {
+    let id = "a/b?#%é";
+    let payload = json!({"id": id, "deleted": true});
+    let fixture = Fixture::new(vec![(200, "X-ListenAPI-Usage: 12\r\n".into(), payload.to_string())]).await;
+    let response = fixture
+        .client(None)
+        .delete_playlist(id, &json!({"id": "must-not-leak", "skip": null}))
+        .await
+        .unwrap();
+    assert_eq!(response.response.status().as_u16(), 200);
+    assert_eq!(response.response.headers()["x-listenapi-usage"], "12");
+    assert_eq!(response.request.method(), reqwest::Method::DELETE);
+    assert_eq!(response.request.url().query(), None);
+    assert!(response.request.body().is_none());
+    assert_eq!(response.json().await.unwrap(), payload);
+    let requests = fixture.finish().await;
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0].target, "/api/v2/playlists/a%2Fb%3F%23%25%C3%A9");
+    assert!(requests[0].body.is_empty());
+    assert!(!requests[0].headers.contains_key("content-type"));
+}
+
+#[tokio::test]
 async fn client_keys_user_agents_and_request_methods_are_isolated() {
-    let fixture = Fixture::new(vec![reply(200), reply(200), reply(200), reply(200)]).await;
+    let fixture = Fixture::new(vec![reply(200), reply(200), reply(200), reply(200), reply(200)]).await;
     let first = fixture.client(Some("first"));
     let second = Client::new_custom(
         Client::http_client_builder().no_proxy().build().unwrap(),
@@ -234,18 +257,19 @@ async fn client_keys_user_agents_and_request_methods_are_isolated() {
     first.update_playlist("list", &json!({"description":""})).await.unwrap();
     second.fetch_my_playlists(&json!({})).await.unwrap();
     first.delete_playlist_item("list", "7", &json!({})).await.unwrap();
+    first.delete_playlist("list", &json!({})).await.unwrap();
     first.search(&json!({"q":"hello"})).await.unwrap();
     let requests = fixture.finish().await;
     assert_eq!(
         requests.iter().map(|r| r.method.as_str()).collect::<Vec<_>>(),
-        ["PUT", "GET", "DELETE", "GET"]
+        ["PUT", "GET", "DELETE", "DELETE", "GET"]
     );
     assert_eq!(
         requests
             .iter()
             .map(|r| r.headers["x-listenapi-key"].as_str())
             .collect::<Vec<_>>(),
-        ["first", "second", "first", "first"]
+        ["first", "second", "first", "first", "first"]
     );
     assert_eq!(requests[1].headers["user-agent"], "custom-agent");
     assert!(requests[1..].iter().all(|r| r.body.is_empty()));
@@ -257,9 +281,10 @@ async fn errors_preserve_response_details_and_are_not_retried_or_redirected() {
     let fixture = Fixture::new(
         statuses
             .iter()
+            .flat_map(|status| [*status; 2])
             .map(|status| {
                 (
-                    *status,
+                    status,
                     "Location: http://127.0.0.1:1/never\r\nX-ListenAPI-Usage: 13\r\n".into(),
                     "{\"error\":\"precise reason\"}".into(),
                 )
@@ -269,22 +294,27 @@ async fn errors_preserve_response_details_and_are_not_retried_or_redirected() {
     .await;
     let client = fixture.client(None);
     for status in statuses {
-        let error = client.create_playlist(&json!({"name":"test"})).await.unwrap_err();
-        let context = error.api_error().unwrap();
-        assert_eq!(context.status.as_u16(), status);
-        assert_eq!(context.headers["x-listenapi-usage"], "13");
-        assert!(context.body.contains("precise reason"));
-        assert!(error.to_string().contains("precise reason"));
-        match status {
-            400 => assert!(matches!(error, Error::InvalidRequestError(_))),
-            401 => assert!(matches!(error, Error::AuthenticationError(_))),
-            403 => assert!(matches!(error, Error::PermissionDeniedError(_))),
-            404 => assert!(matches!(error, Error::NotFoundError(_))),
-            429 => assert!(matches!(error, Error::RateLimitError(_))),
-            _ => assert!(matches!(error, Error::ListenApiError(_))),
+        for method in ["create_playlist", "delete_playlist"] {
+            let error = match method {
+                "create_playlist" => client.create_playlist(&json!({"name":"test"})).await.unwrap_err(),
+                _ => client.delete_playlist("list", &json!({})).await.unwrap_err(),
+            };
+            let context = error.api_error().unwrap();
+            assert_eq!(context.status.as_u16(), status);
+            assert_eq!(context.headers["x-listenapi-usage"], "13");
+            assert!(context.body.contains("precise reason"));
+            assert!(error.to_string().contains("precise reason"));
+            match status {
+                400 => assert!(matches!(error, Error::InvalidRequestError(_))),
+                401 => assert!(matches!(error, Error::AuthenticationError(_))),
+                403 => assert!(matches!(error, Error::PermissionDeniedError(_))),
+                404 => assert!(matches!(error, Error::NotFoundError(_))),
+                429 => assert!(matches!(error, Error::RateLimitError(_))),
+                _ => assert!(matches!(error, Error::ListenApiError(_))),
+            }
         }
     }
-    assert_eq!(fixture.finish().await.len(), statuses.len());
+    assert_eq!(fixture.finish().await.len(), statuses.len() * 2);
 }
 
 #[tokio::test]
@@ -292,10 +322,18 @@ async fn local_validation_never_sends_invalid_requests() {
     let client = Client::new(None).with_base_url("http://127.0.0.1:1/api/v2").unwrap();
     for params in [Value::Null, json!([]), json!("not an object")] {
         assert!(matches!(client.search(&params).await, Err(Error::InvalidParameter(_))));
+        assert!(matches!(
+            client.delete_playlist("list", &params).await,
+            Err(Error::InvalidParameter(_))
+        ));
     }
     for id in ["", ".", ".."] {
         assert!(matches!(
             client.fetch_podcast_by_id(id, &json!({})).await,
+            Err(Error::InvalidParameter(_))
+        ));
+        assert!(matches!(
+            client.delete_playlist(id, &json!({})).await,
             Err(Error::InvalidParameter(_))
         ));
     }
@@ -357,5 +395,7 @@ async fn custom_timeouts_remain_effective() {
     .with_base_url(&base)
     .unwrap();
     let error = client.search(&json!({})).await.unwrap_err();
+    assert!(matches!(error, Error::ApiConnectionError(_)));
+    let error = client.delete_playlist("list", &json!({})).await.unwrap_err();
     assert!(matches!(error, Error::ApiConnectionError(_)));
 }
