@@ -194,6 +194,13 @@ impl Client<'_> {
             &[("id", id)], &[], parameters).await
     }
 
+    /// Delete a playlist.
+    /// See [full API documentation](https://www.listennotes.com/api/docs/#delete-api-v2-playlists-id).
+    pub async fn delete_playlist(&self, id: &str, parameters: &Value) -> Result<Response> {
+        self.request_api(Method::DELETE, "/playlists/{id}",
+            &[("id", id)], &[], parameters).await
+    }
+
     /// Add an episode or podcast to a playlist.
     /// See [full API documentation](https://www.listennotes.com/api/docs/#post-api-v2-playlists-id-items).
     pub async fn add_playlist_item(&self, id: &str, parameters: &Value) -> Result<Response> {

@@ -32,6 +32,7 @@ pub async fn call(client: &Client<'_>, operation: &str, params: &Value) -> Resul
         "getPodcastsByDomainName" => client.fetch_podcasts_by_domain(&scalar(&params["domain_name"]), params).await,
         "createPlaylist" => client.create_playlist(params).await,
         "updatePlaylist" => client.update_playlist(&scalar(&params["id"]), params).await,
+        "deletePlaylist" => client.delete_playlist(&scalar(&params["id"]), params).await,
         "addPlaylistItem" => client.add_playlist_item(&scalar(&params["id"]), params).await,
         "deletePlaylistItem" => client.delete_playlist_item(&scalar(&params["id"]), &scalar(&params["item_id"]), params).await,
         "updatePlaylistItemNotes" => client.update_playlist_item_notes(&scalar(&params["id"]), &scalar(&params["item_id"]), params).await,

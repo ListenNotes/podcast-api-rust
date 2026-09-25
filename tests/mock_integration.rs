@@ -24,6 +24,11 @@ async fn all_methods_against_the_public_mock() {
         );
         assert!(!response.request.headers().contains_key("x-listenapi-key"));
         assert_eq!(response.request.method().as_str(), op["method"]);
+        if name == "deletePlaylist" {
+            assert_eq!(response.request.url().path(), "/api/v2/playlists/m1pe7z60bsw");
+            assert_eq!(response.request.url().query(), None);
+            assert!(response.request.body().is_none());
+        }
         let status = if matches!(name, "createPlaylist" | "addPlaylistItem") {
             201
         } else {
@@ -67,6 +72,10 @@ async fn all_methods_against_the_public_mock() {
             "deletePlaylistItem" => {
                 assert_eq!(body["deleted"], true);
                 assert!(body["id"].is_u64());
+            }
+            "deletePlaylist" => {
+                assert_eq!(body["deleted"], true);
+                assert_eq!(body["id"], op["example_params"]["id"]);
             }
             _ => {}
         }
