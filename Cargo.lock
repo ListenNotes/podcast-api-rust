@@ -599,6 +599,7 @@ dependencies = [
  "reqwest",
  "serde_json",
  "tokio",
+ "webpki-root-certs",
 ]
 
 [[package]]
