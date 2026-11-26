@@ -974,7 +974,7 @@ Signed URLs in `download_urls` are valid for 15 minutes and share the UTC expira
 
 Transcription uses speaker diarization to distinguish voices. When multiple speakers are detected, TXT, SRT, and VTT use speaker labels. A TXT download places the label before the spoken text.
 
-```
+```text
 Speaker A: Thanks for joining us.
 
 Speaker B: Happy to be here.
