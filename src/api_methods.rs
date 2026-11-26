@@ -222,4 +222,32 @@ impl Client<'_> {
             &[("id", id), ("item_id", item_id)], &[], parameters).await
     }
 
+    /// Estimate episode transcription cost
+    /// See [full API documentation](https://www.listennotes.com/api/docs/#get-api-v2-episodes-id-transcript-estimate).
+    pub async fn estimate_episode_transcription(&self, id: &str, parameters: &Value) -> Result<Response> {
+        self.request_api(Method::GET, "/episodes/{id}/transcript/estimate",
+            &[("id", id)], &[], parameters).await
+    }
+
+    /// Request episode transcription
+    /// See [full API documentation](https://www.listennotes.com/api/docs/#post-api-v2-episodes-id-transcript).
+    pub async fn transcribe_episode(&self, id: &str, parameters: &Value) -> Result<Response> {
+        self.request_api(Method::POST, "/episodes/{id}/transcript",
+            &[("id", id)], &[], parameters).await
+    }
+
+    /// Get episode transcription status and downloads
+    /// See [full API documentation](https://www.listennotes.com/api/docs/#get-api-v2-episodes-id-transcript).
+    pub async fn get_episode_transcript(&self, id: &str, parameters: &Value) -> Result<Response> {
+        self.request_api(Method::GET, "/episodes/{id}/transcript",
+            &[("id", id)], &[], parameters).await
+    }
+
+    /// List completed episode transcripts
+    /// See [full API documentation](https://www.listennotes.com/api/docs/#get-api-v2-transcripts).
+    pub async fn list_transcripts(&self, parameters: &Value) -> Result<Response> {
+        self.request_api(Method::GET, "/transcripts",
+            &[], &["limit", "cursor"], parameters).await
+    }
+
 }
