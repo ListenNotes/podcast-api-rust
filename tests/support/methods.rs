@@ -36,6 +36,10 @@ pub async fn call(client: &Client<'_>, operation: &str, params: &Value) -> Resul
         "addPlaylistItem" => client.add_playlist_item(&scalar(&params["id"]), params).await,
         "deletePlaylistItem" => client.delete_playlist_item(&scalar(&params["id"]), &scalar(&params["item_id"]), params).await,
         "updatePlaylistItemNotes" => client.update_playlist_item_notes(&scalar(&params["id"]), &scalar(&params["item_id"]), params).await,
+        "estimateEpisodeTranscription" => client.estimate_episode_transcription(&scalar(&params["id"]), params).await,
+        "transcribeEpisode" => client.transcribe_episode(&scalar(&params["id"]), params).await,
+        "getEpisodeTranscript" => client.get_episode_transcript(&scalar(&params["id"]), params).await,
+        "listTranscripts" => client.list_transcripts(params).await,
         _ => panic!("unknown operation: {operation}"),
     }
 }

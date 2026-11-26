@@ -29,10 +29,10 @@ async fn all_methods_against_the_public_mock() {
             assert_eq!(response.request.url().query(), None);
             assert!(response.request.body().is_none());
         }
-        let status = if matches!(name, "createPlaylist" | "addPlaylistItem") {
-            201
-        } else {
-            200
+        let status = match name {
+            "createPlaylist" | "addPlaylistItem" => 201,
+            "transcribeEpisode" => 202,
+            _ => 200,
         };
         assert_eq!(response.response.status().as_u16(), status, "{name}");
         for header in [
@@ -72,6 +72,13 @@ async fn all_methods_against_the_public_mock() {
             "deletePlaylistItem" => {
                 assert_eq!(body["deleted"], true);
                 assert!(body["id"].is_u64());
+            }
+            "transcribeEpisode" => {
+                assert_eq!(body["status"], "queued");
+            }
+            "getEpisodeTranscript" => {
+                assert_eq!(body["status"], "completed");
+                assert!(body["download_urls"].is_object());
             }
             "deletePlaylist" => {
                 assert_eq!(body["deleted"], true);

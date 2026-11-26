@@ -127,7 +127,7 @@ fn pairs(value: &str) -> BTreeMap<String, String> {
 async fn every_generated_method_obeys_the_contract() {
     let contract = support::contract();
     let operations = contract["operations"].as_array().unwrap();
-    assert_eq!(operations.len(), 31);
+    assert_eq!(operations.len(), 35);
     let fixture = Fixture::new(
         operations
             .iter()
